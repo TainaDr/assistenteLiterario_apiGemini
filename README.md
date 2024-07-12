@@ -1,0 +1,1 @@
+# assistenteLiterario_apiGemini
