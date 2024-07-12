@@ -41,7 +41,7 @@
 <script>
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = "AIzaSyCZLjOX4zpSgW1J21SEFeSuYdaTR7SdUPc";
+const apiKey = "**************************"; //chave de API oculta para segurança do desenvolvedor
 const genAI = new GoogleGenerativeAI(apiKey);
 
 export default {
