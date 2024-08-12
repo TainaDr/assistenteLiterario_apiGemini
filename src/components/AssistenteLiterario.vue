@@ -15,8 +15,10 @@
             <form @submit.prevent="enviarPergunta">
                 <input type="text" v-model="consulta" placeholder="Em que posso te ajudar hoje?">
                 <button type="submit">Enviar</button>
+                <button type="button" @click="conectarMongo">Conectar com Mongo</button>
             </form>
         </section>
+      
         <hr>
         <footer>
             <p style="text-align: center;">Desenvolvido por Tainá Leandra Dreissig</p>
@@ -36,20 +38,37 @@
 </template>
 
 <script>
+import axios from 'axios';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const apiKey = "AIzaSyCZLjOX4zpSgW1J21SEFeSuYdaTR7SdUPc"; //chave oculta para segurança do desenvolvedor
 const genAI = new GoogleGenerativeAI(apiKey);
 
 export default {
-    name: 'HelloWorld',
+    name: 'AssistenteLiterario',
     data() {
         return {
             consulta: '',
-            chatHistory: []
-        }
+            chatHistory: [],
+        };
     },
     methods: {
+
+        async conectarMongo() {
+            try {
+                // Fazendo uma requisição para o backend para verificar a conexão com MongoDB
+                const response = await axios.get('http://localhost:3000/api/test-connection');
+                if (response.status === 200) {
+                    console.log('Conexão com MongoDB estabelecida com sucesso.');
+                } else {
+                    console.error('Falha ao conectar ao MongoDB.');
+                }
+            } catch (error) {
+                console.error('Erro ao tentar conectar ao MongoDB:', error);
+            }
+
+        },
+
         async enviarPergunta() {
             if (this.consulta.trim() === '') return;
 
@@ -61,6 +80,7 @@ export default {
             const model = genAI.getGenerativeModel({
                 model: "gemini-1.5-flash",
             });
+
             const generationConfig = {
                 temperature: 1,
                 topP: 0.95,
@@ -71,7 +91,7 @@ export default {
 
             const initialMessage = {
                 role: 'user',
-                parts: [{ text: "Você é uma assistente literária chamada Aza, vai apenas dar respostas sobre livros, autores, gêneros literários, indicação de livros e autores, poemas, etc. Não responda nada fora deste assunto!! Apenas sobre livros." }]
+                parts: [{ text: "Você é uma assistente literária chamada Aza, vai apenas dar respostas sobre livros, autores, gêneros literários, indicação de livros e autores, poemas, etc. Não responda nada fora deste assunto!! Apenas sobre livros. Faça apenas uma pergunta por vez, não utilize frases em negrito." }]
             };
 
             const chatSession = model.startChat({
@@ -112,36 +132,6 @@ export default {
         });
     }
 }
-
-//fyAbR05x8Fpy4H2l
-//tainadreissig
-//200.150.64.234
-
-// const { MongoClient, ServerApiVersion } = require('mongodb');
-// const uri = "mongodb+srv://tainadreissig:fyAbR05x8Fpy4H2l@cluster0.eji0zrv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
-// // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-// const client = new MongoClient(uri, {
-//     serverApi: {
-//         version: ServerApiVersion.v1,
-//         strict: true,
-//         deprecationErrors: true,
-//     }
-// });
-
-// async function run() {
-//     try {
-//         // Connect the client to the server	(optional starting in v4.7)
-//         await client.connect();
-//         // Send a ping to confirm a successful connection
-//         await client.db("admin").command({ ping: 1 });
-//         console.log("Pinged your deployment. You successfully connected to MongoDB!");
-//     } finally {
-//         // Ensures that the client will close when you finish/error
-//         await client.close();
-//     }
-// }
-// run().catch(console.dir);
 
 </script>
 
