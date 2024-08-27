@@ -12,13 +12,13 @@
                     <p>{{ message.parts[0].text }}</p>
                 </div>
             </div>
-            <form @submit.prevent="enviarPergunta">
-                <input type="text" v-model="consulta" placeholder="Em que posso te ajudar hoje?">
-                <button type="submit">Enviar</button>
-                <button type="button" @click="conectarMongo">Conectar com Mongo</button>
+            <form id="historyForm" @submit.prevent="enviarPergunta">
+                <input type="text" v-model="consulta" placeholder="Em que posso te ajudar hoje?" required>
+                <button style="margin-right: 20px" type="submit">Enviar</button>
+                <button  style="margin-right: 20px" type="button" @click="conectarMongo">Conectar com Mongo</button>
+                <button type="submit">Registrar Histórico</button>
             </form>
         </section>
-      
         <hr>
         <footer>
             <p style="text-align: center;">Desenvolvido por Tainá Leandra Dreissig</p>
@@ -41,7 +41,7 @@
 import axios from 'axios';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = "AIzaSyCZLjOX4zpSgW1J21SEFeSuYdaTR7SdUPc"; //chave oculta para segurança do desenvolvedor
+const apiKey = "AIzaSyCZLjOX4zpSgW1J21SEFeSuYdaTR7SdUPc";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 export default {
@@ -53,10 +53,81 @@ export default {
         };
     },
     methods: {
+        async enviarPergunta() {
+    if (this.consulta.trim() === '') return;
+
+    this.chatHistory.push({
+        role: 'user',
+        parts: [{ text: this.consulta }]
+    });
+
+    const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+    });
+
+    const generationConfig = {
+        temperature: 1,
+        topP: 0.95,
+        topK: 64,
+        maxOutputTokens: 8192,
+        responseMimeType: "text/plain",
+    };
+
+    const initialMessage = {
+        role: 'user',
+        parts: [{ text: "Você é uma assistente literária chamada Aza..." }]
+    };
+
+    const chatSession = model.startChat({
+        generationConfig,
+        history: [
+            initialMessage,
+            ...this.chatHistory.map(msg => ({
+                role: msg.role,
+                parts: msg.parts
+            }))
+        ]
+    });
+
+    try {
+        const result = await chatSession.sendMessage(this.consulta);
+        const respostaTexto = await result.response.text();
+
+        this.chatHistory.push({
+            role: 'model',
+            parts: [{ text: respostaTexto }]
+        });
+
+        this.$nextTick(() => {
+            const chatbox = document.getElementById('chatbox');
+            chatbox.scrollTop = chatbox.scrollHeight;
+        });
+
+        const userId = '12345'; // Exemplo: substituir pelo ID real do usuário
+        const action = this.consulta;
+
+        const response = await fetch('http://localhost:3000/api/history', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId, action })
+        });
+
+        if (response.ok) {
+            alert('Histórico registrado com sucesso!');
+        } else {
+            alert('Erro ao registrar histórico.');
+        }
+
+        this.consulta = '';
+    } catch (error) {
+        console.error('Erro ao enviar a mensagem:', error);
+    }
+},
 
         async conectarMongo() {
             try {
-                // Fazendo uma requisição para o backend para verificar a conexão com MongoDB
                 const response = await axios.get('http://localhost:3000/api/test-connection');
                 if (response.status === 200) {
                     console.log('Conexão com MongoDB estabelecida com sucesso.');
@@ -66,75 +137,16 @@ export default {
             } catch (error) {
                 console.error('Erro ao tentar conectar ao MongoDB:', error);
             }
-
-        },
-
-        async enviarPergunta() {
-            if (this.consulta.trim() === '') return;
-
-            this.chatHistory.push({
-                role: 'user',
-                parts: [{ text: this.consulta }]
-            });
-
-            const model = genAI.getGenerativeModel({
-                model: "gemini-1.5-flash",
-            });
-
-            const generationConfig = {
-                temperature: 1,
-                topP: 0.95,
-                topK: 64,
-                maxOutputTokens: 8192,
-                responseMimeType: "text/plain",
-            };
-
-            const initialMessage = {
-                role: 'user',
-                parts: [{ text: "Você é uma assistente literária chamada Aza, vai apenas dar respostas sobre livros, autores, gêneros literários, indicação de livros e autores, poemas, etc. Não responda nada fora deste assunto!! Apenas sobre livros. Faça apenas uma pergunta por vez, não utilize frases em negrito." }]
-            };
-
-            const chatSession = model.startChat({
-                generationConfig,
-                history: [
-                    initialMessage,
-                    ...this.chatHistory.map(msg => ({
-                        role: msg.role,
-                        parts: msg.parts
-                    }))
-                ]
-            });
-
-            try {
-                const result = await chatSession.sendMessage(this.consulta);
-                const respostaTexto = await result.response.text();
-
-                this.chatHistory.push({
-                    role: 'model',
-                    parts: [{ text: respostaTexto }]
-                });
-
-                this.$nextTick(() => {
-                    const chatbox = document.getElementById('chatbox');
-                    chatbox.scrollTop = chatbox.scrollHeight;
-                });
-
-                this.consulta = '';
-            } catch (error) {
-                console.error('Erro ao enviar a mensagem:', error);
-            }
         }
     },
     mounted() {
         this.chatHistory.push({
             role: "model",
-            parts: [{ text: "Olá! Sou Aza, sua assistente literária. Adoro conversar sobre livros, autores, poemas e tudo que envolve o mundo da leitura. 😄 \n\nConte-me o que te interessa! Precisa de uma indicação de livro para ler? Quer saber mais sobre um autor específico? Ou talvez queira decifrar um poema? \n\nEstou aqui para te ajudar a mergulhar nesse universo mágico! ✨ \n" }]
+            parts: [{ text: "Olá! Sou Aza, sua assistente literária..." }]
         });
     }
-}
-
+};
 </script>
-
 <style scoped>
 body {
     font-family: Arial, Helvetica, sans-serif;
