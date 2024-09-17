@@ -12,20 +12,13 @@
 
         </div>
         <article class="textos">
-            <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ad accusantium molestiae beatae tempore nemo
-                maxime necessitatibus earum iure, deserunt, atque, fugiat impedit nisi voluptatem esse consectetur dicta Voluptates, maiores numquam! Quibusdam, deserunt? Qui magni laudantium iusto recusandae labore
-                consectetur repellat beatae repellendus aspernatur atque?
-                Vero modi expedita, animi magnam vitae eius esse, placeat delectus cupiditate fugiat reiciendis quam
-                adipisci vel doloremque.</p>
-            <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Consequuntur eum consequatur illo voluptatum.
-                Voluptates, maiores numquam! Quibusdam, deserunt? Qui magni laudantium iusto recusandae labore
-                consectetur repellat beatae repellendus aspernatur atque?
-                Vero modi expedita, animi magnam vitae eius esse, placeat delectus cupiditate fugiat reiciendis quam
-                necessitatibus repellat, ratione officiis? Blanditiis, aliquam quos! Dolor illo tempora aut aperiam
-                dolore doloribus non ea.
-                provident soluta dolorum tempora eveniet possimus tempore veritatis reiciendis mollitia, eum velit
-                repudiandae autem ducimus? Vitae, eos.
-                
+            <p><b>Bem-vindo ao Seu Assistente Literário Virtual</b>
+                Conheça o seu guia personalizado de leitura! Aqui, a Inteligência Artificial trabalha para recomendar as melhores obras literárias, adaptadas ao seu gosto e estilo de leitura.
+                <b>Recomendações Personalizadas: </b> Responda a algumas perguntas rápidas sobre seus interesses, gêneros favoritos ou humor do momento, e receba sugestões de livros que combinam com seu perfil.</p>
+            <p>
+                <b>Exploração de Novos Gêneros:</b> Quer se aventurar em uma nova categoria literária? Nosso assistente oferece opções variadas, desde clássicos da literatura até best-sellers contemporâneos.
+                <b> Listas Curadas para Você:</b> Receba listas temáticas de livros para diferentes ocasiões, como leituras para férias, momentos de introspecção ou pura diversão.
+                <b>Descoberta de Autores:</b> Conheça escritores consagrados e novos talentos com base em suas leituras anteriores.
             </p>
         </article>
         <!-- <img class="imagemlivro" src="../assets/books-8594725_1280.jpg" alt="imagem livros"> -->
