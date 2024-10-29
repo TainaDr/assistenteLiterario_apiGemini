@@ -7,7 +7,7 @@
                     <a id="link2" href="#sobre"><b>SOBRE</b></a>
                 </li>
                 <li>
-                    <a id="link3" href="#contato"> <b>CONTATO</b></a>
+                    <a id="link3" href="#contato"><b>CONTATO</b></a>
                 </li>
             </menu>
             <div class="header2">
@@ -43,7 +43,7 @@
             </div>
             <form id="historyForm" @submit.prevent="enviarPergunta">
                 <input type="text" v-model="consulta" placeholder="Em que posso te ajudar hoje?" required />
-                <button style="margin-right: 20px" type="submit" @click="conectarMongo">
+                <button style="margin-right: 20px" type="submit">
                     Enviar
                 </button>
             </form>
@@ -64,7 +64,7 @@
         </footer>
     </div>
 </template>
-
+<!-- //AIzaSyCZLjOX4zpSgW1J21SEFeSuYdaTR7SdUPc -->
 <script>
 import axios from "axios";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -73,16 +73,19 @@ const apiKey = "AIzaSyCZLjOX4zpSgW1J21SEFeSuYdaTR7SdUPc";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 export default {
-    name: "AssistenteLiterario",
     data() {
         return {
             consulta: "",
             chatHistory: [],
+            ipAddress: "",
+            city: "",
+            state: "",
+            country: ""
         };
     },
     methods: {
         async enviarPergunta() {
-            if (this.consulta.trim() === "") return;
+            if (!this.consulta.trim()) return;
 
             const userMessage = this.consulta.replace(/\*/g, "");
             this.chatHistory.push({
@@ -93,7 +96,6 @@ export default {
             const model = genAI.getGenerativeModel({
                 model: "gemini-1.5-flash",
             });
-
             const generationConfig = {
                 temperature: 1,
                 topP: 0.95,
@@ -101,7 +103,6 @@ export default {
                 maxOutputTokens: 8192,
                 responseMimeType: "text/plain",
             };
-
             const initialMessage = {
                 role: "user",
                 parts: [
@@ -111,22 +112,22 @@ export default {
                 ],
             };
 
-            const chatSession = model.startChat({
-                generationConfig,
-                history: [
-                    initialMessage,
-                    ...this.chatHistory.map((msg) => ({
-                        role: msg.role,
-                        parts: msg.parts,
-                    })),
-                ],
-            });
-
             try {
+                const chatSession = model.startChat({
+                    generationConfig,
+                    history: [
+                        initialMessage,
+                        ...this.chatHistory.map((msg) => ({
+                            role: msg.role,
+                            parts: msg.parts,
+                        })),
+                    ],
+                });
+
                 const result = await chatSession.sendMessage(this.consulta);
                 const respostaTexto = await result.response.text();
-
                 const cleanResponse = respostaTexto.replace(/\*/g, "");
+
                 this.chatHistory.push({
                     role: "model",
                     parts: [{ text: cleanResponse }],
@@ -136,23 +137,16 @@ export default {
                     const chatbox = document.getElementById("chatbox");
                     chatbox.scrollTop = chatbox.scrollHeight;
                 });
-
-                const userId = "12345";
-                const action = this.consulta;
-
-                const response = await fetch("http://localhost:3000/api/history", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ userId, action }),
+                
+                const userId = "12345"; 
+                await axios.post("http://localhost:3000/api/history", {
+                    userId,
+                    action: this.consulta,
+                    city: this.city,
+                    state: this.state,
+                    country: this.country,
+                    ipAddress: this.ipAddress
                 });
-
-                if (response.ok) {
-                    alert("Histórico registrado com sucesso!");
-                } else {
-                    alert("Erro ao registrar histórico.");
-                }
 
                 this.consulta = "";
             } catch (error) {
@@ -160,33 +154,18 @@ export default {
             }
         },
 
-        async conectarMongo() {
-            try {
-                const response = await axios.get(
-                    "http://localhost:3000/api/test-connection"
-                );
-                if (response.status === 200) {
-                    console.log("Conexão com MongoDB estabelecida com sucesso.");
-                } else {
-                    console.error("Falha ao conectar ao MongoDB.");
-                }
-            } catch (error) {
-                console.error("Erro ao tentar conectar ao MongoDB:", error);
-            }
-        },
+       
     },
     mounted() {
         this.chatHistory.push({
             role: "model",
             parts: [{ text: "Olá! Sou Aza, sua assistente literária..." }],
         });
-    },
+    }
 };
 </script>
 
 <style>
-/* Estilos Globais */
-
 * {
     box-sizing: border-box;
 }
@@ -197,7 +176,6 @@ body {
     margin: 0 auto;
 }
 
-/* Menu */
 menu {
     display: flex;
     justify-content: end;
@@ -219,7 +197,6 @@ menu li {
     text-decoration: none;
 }
 
-/* Cabeçalho */
 .header2 {
     padding-top: 40px;
     display: flex;
@@ -230,13 +207,11 @@ menu li {
     margin: 0 auto;
 }
 
-/* Logo */
 .logo {
     width: 150px;
     height: 150px;
 }
 
-/* Texto */
 .textos {
     display: flex;
     justify-content: center;
@@ -256,7 +231,6 @@ menu li {
     flex: 1;
 }
 
-/* Chatbox */
 #chatbox {
     background-color: #ede1d2;
     border-radius: 5px;
@@ -283,7 +257,6 @@ menu li {
     border: 3px solid #ede1d2;
 }
 
-/* Mensagens do Chat */
 .message {
     margin-bottom: 10px;
     padding: 10px;
@@ -306,7 +279,6 @@ menu li {
     margin-right: 400px;
 }
 
-/* Formulário de Envio */
 form {
     display: flex;
     flex-direction: row;
@@ -347,7 +319,6 @@ button:hover {
     background-color: #5a5e;
 }
 
-/* Footer */
 footer {
     text-align: center;
     margin-top: 20px;
@@ -363,7 +334,6 @@ footer {
     height: 30px;
 }
 
-/* Imagem */
 .imagemlivro {
     width: 100%;
     height: 300px;
@@ -371,7 +341,6 @@ footer {
     margin-top: 0;
 }
 
-/* Responsividade  */
 @media (max-width: 768px) {
     .logo {
         width: 80px;
