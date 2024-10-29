@@ -93,39 +93,34 @@ export default {
                 parts: [{ text: userMessage }],
             });
 
-            const model = genAI.getGenerativeModel({
-                model: "gemini-1.5-flash",
-            });
-            const generationConfig = {
-                temperature: 1,
-                topP: 0.95,
-                topK: 64,
-                maxOutputTokens: 8192,
-                responseMimeType: "text/plain",
-            };
-            const initialMessage = {
-                role: "user",
-                parts: [
-                    {
-                        text: "Você é uma assistente literária chamada Aza, especialista em livros e indicações literárias, você vai indicar livros, autores, sagas... É projetada para responder perguntas exclusivamente relacionadas a livros, autores, obras literárias, gêneros, resenhas e tópicos literários em geral. Seu foco é fornecer informações precisas e educativas sobre literatura, ajudando os usuários com dúvidas sobre leitura, recomendações de obras, estilos de escrita, entre outros assuntos literários. NÃO RESPONDA NADA FORA DO TEMA LITERATURA.",
-                    },
-                ],
-            };
-
             try {
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                const generationConfig = {
+                    temperature: 1,
+                    topP: 0.95,
+                    topK: 64,
+                    maxOutputTokens: 8192,
+                    responseMimeType: "text/plain",
+                };
+                const initialMessage = {
+                    role: "user",
+                    parts: [
+                        {
+                            text: "Você é uma assistente literária chamada Aza, especialista em livros e indicações literárias, você vai indicar livros, autores, sagas... É projetada para responder perguntas exclusivamente relacionadas a livros, autores, obras literárias, gêneros, resenhas e tópicos literários em geral. Seu foco é fornecer informações precisas e educativas sobre literatura, ajudando os usuários com dúvidas sobre leitura, recomendações de obras, estilos de escrita, entre outros assuntos literários. NÃO RESPONDA NADA FORA DO TEMA LITERATURA.",
+                        },
+                    ],
+                };
+
                 const chatSession = model.startChat({
                     generationConfig,
                     history: [
                         initialMessage,
-                        ...this.chatHistory.map((msg) => ({
-                            role: msg.role,
-                            parts: msg.parts,
-                        })),
+                        ...this.chatHistory,
                     ],
                 });
 
                 const result = await chatSession.sendMessage(this.consulta);
-                const respostaTexto = await result.response.text();
+                const respostaTexto = result.response.text();
                 const cleanResponse = respostaTexto.replace(/\*/g, "");
 
                 this.chatHistory.push({
@@ -135,10 +130,10 @@ export default {
 
                 this.$nextTick(() => {
                     const chatbox = document.getElementById("chatbox");
-                    chatbox.scrollTop = chatbox.scrollHeight;
+                    if (chatbox) chatbox.scrollTop = chatbox.scrollHeight;
                 });
-                
-                const userId = "12345"; 
+
+                const userId = "12345";
                 await axios.post("http://localhost:3000/api/history", {
                     userId,
                     action: this.consulta,
@@ -153,17 +148,16 @@ export default {
                 console.error("Erro ao enviar a mensagem:", error);
             }
         },
-
-       
     },
     mounted() {
         this.chatHistory.push({
             role: "model",
-            parts: [{ text: "Olá! Sou Aza, sua assistente literária..." }],
+            parts: [{ text: "Olá! Sou Aza, sua assistente literária. Como posso ajudar você com dúvidas sobre livros e literatura?" }],
         });
     }
 };
 </script>
+
 
 <style>
 * {
