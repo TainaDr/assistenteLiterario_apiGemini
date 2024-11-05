@@ -69,7 +69,7 @@
 import axios from "axios";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = "AIzaSyCZLjOX4zpSgW1J21SEFeSuYdaTR7SdUPc";
+const apiKey = "AIzaSyCUiWkCcgIAUDbXq1gbk8M6Hele1eIBnDg";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 export default {
