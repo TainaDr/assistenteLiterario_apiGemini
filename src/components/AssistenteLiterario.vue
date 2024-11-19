@@ -43,9 +43,7 @@
             </div>
             <form id="historyForm" @submit.prevent="enviarPergunta">
                 <input type="text" v-model="consulta" placeholder="Em que posso te ajudar hoje?" required />
-                <button style="margin-right: 20px" type="submit">
-                    Enviar
-                </button>
+                <button @click="enviarPergunta" style="margin-right: 20px" type="submit">Enviar</button>
             </form>
         </section>
         <footer id="contato">
@@ -64,37 +62,62 @@
         </footer>
     </div>
 </template>
-<!-- //AIzaSyCZLjOX4zpSgW1J21SEFeSuYdaTR7SdUPc -->
+<!-- //AIzaSyBCEztLwNHhKP9KeWPbLMS4HRwzvUpm0QE -->
 <script>
 import axios from "axios";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = "AIzaSyCUiWkCcgIAUDbXq1gbk8M6Hele1eIBnDg";
+const apiKey = "AIzaSyBCEztLwNHhKP9KeWPbLMS4HRwzvUpm0QE";
 const genAI = new GoogleGenerativeAI(apiKey);
+
+const api = axios.create({
+    baseURL: "https://endpoint-assistenteliterario.onrender.com/api/",
+    headers: {
+        "Content-Type": "application/json",
+    },
+});
 
 export default {
     data() {
         return {
             consulta: "",
-            chatHistory: [],
+            chatHistory: [
+                {
+                    role: "user",
+                    parts: [
+                        { text: "Olá!\n" },
+                    ],
+                },
+            ],
             ipAddress: "",
             city: "",
             state: "",
-            country: ""
+            country: "",
+            isSending: false,
         };
     },
     methods: {
         async enviarPergunta() {
-            if (!this.consulta.trim()) return;
-
-            const userMessage = this.consulta.replace(/\*/g, "");
-            this.chatHistory.push({
-                role: "user",
-                parts: [{ text: userMessage }],
-            });
-
+            if (!this.consulta.trim()) {
+                console.warn("Consulta vazia! Nada será enviado.");
+                return;
+            }
+            if (this.isSending) {
+                console.warn("Já existe uma mensagem em envio. Aguarde.");
+                return;
+            }
+            this.isSending = true;
             try {
+                const userMessage = this.consulta.replace(/\*/g, "");
+                this.chatHistory.push({
+                    role: "user",
+                    parts: [{ text: userMessage }],
+                });
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                if (!model) {
+                    console.error("Modelo não foi inicializado corretamente.");
+                    return;
+                }
                 const generationConfig = {
                     temperature: 1,
                     topP: 0.95,
@@ -102,62 +125,54 @@ export default {
                     maxOutputTokens: 8192,
                     responseMimeType: "text/plain",
                 };
-                const initialMessage = {
-                    role: "user",
-                    parts: [
-                        {
-                            text: "Você é uma assistente literária chamada Aza, especialista em livros e indicações literárias, você vai indicar livros, autores, sagas... É projetada para responder perguntas exclusivamente relacionadas a livros, autores, obras literárias, gêneros, resenhas e tópicos literários em geral. Seu foco é fornecer informações precisas e educativas sobre literatura, ajudando os usuários com dúvidas sobre leitura, recomendações de obras, estilos de escrita, entre outros assuntos literários. NÃO RESPONDA NADA FORA DO TEMA LITERATURA.",
-                        },
-                    ],
-                };
-
                 const chatSession = model.startChat({
                     generationConfig,
-                    history: [
-                        initialMessage,
-                        ...this.chatHistory,
-                    ],
+                    history: this.chatHistory, 
                 });
-
-                const result = await chatSession.sendMessage(this.consulta);
-                const respostaTexto = result.response.text();
+                const result = await chatSession.sendMessage(userMessage);
+                if (!result || !result.response) {
+                    console.error("Nenhuma resposta recebida do modelo.");
+                    return;
+                }
+                const respostaTexto = await result.response.text();
                 const cleanResponse = respostaTexto.replace(/\*/g, "");
-
                 this.chatHistory.push({
-                    role: "model",
-                    parts: [{ text: cleanResponse }],
+            role: "user",
+            parts: [{ text: userMessage }],
+        }, {
+            role: "model",
+            parts: [{ text: cleanResponse }],
+        });
+                await api.post("/history", {
+                    userId: "12345",
+                    action: userMessage,
+                    city: this.city || "Cidade desconhecida",
+                    state: this.state || "Estado desconhecido",
+                    country: this.country || "País desconhecido",
+                    ipAddress: this.ipAddress || "127.0.0.1",
                 });
-
-                this.$nextTick(() => {
-                    const chatbox = document.getElementById("chatbox");
-                    if (chatbox) chatbox.scrollTop = chatbox.scrollHeight;
-                });
-
-                const userId = "12345";
-                await axios.post("http://localhost:3000/api/history", {
-                    userId,
-                    action: this.consulta,
-                    city: this.city,
-                    state: this.state,
-                    country: this.country,
-                    ipAddress: this.ipAddress
-                });
-
                 this.consulta = "";
             } catch (error) {
                 console.error("Erro ao enviar a mensagem:", error);
+            } finally {
+                this.isSending = false;
             }
+            this.$nextTick(() => {
+                const chatbox = document.getElementById("chatbox");
+                if (chatbox) chatbox.scrollTop = chatbox.scrollHeight;
+            });
         },
     },
     mounted() {
-        this.chatHistory.push({
-            role: "model",
-            parts: [{ text: "Olá! Sou Aza, sua assistente literária. Como posso ajudar você com dúvidas sobre livros e literatura?" }],
-        });
-    }
+        if (this.chatHistory.length === 1) {
+            this.chatHistory.push({
+                role: "model",
+                parts: [{ text: "Olá! Sou Aza, sua assistente literária. Como posso ajudar você com dúvidas sobre livros e literatura?\n" }],
+            });
+        }
+    },
 };
 </script>
-
 
 <style>
 * {
