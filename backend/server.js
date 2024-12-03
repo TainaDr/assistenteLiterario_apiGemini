@@ -4,17 +4,17 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const requestIp = require("request-ip");
 const axios = require("axios");
-require("dotenv").config(); 
+require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 const corsOptions = {
-      origin: "http://10.200.74.46:8080", 
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
-      allowedHeaders: ["Content-Type", "Authorization"], 
+      origin: "http://10.200.74.46:8080",
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-app.use(cors(corsOptions)); 
+app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
 app.use(bodyParser.json());
@@ -27,13 +27,15 @@ app.use((req, res, next) => {
 });
 
 //const MONGO_URI = "mongodb+srv://tainadreissig14:<tainadreissig14>@cluster0.z0h59xx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const MONGO_URI = "mongodb+srv://tainadreissig14:tainadreissig14@cluster0.z0h59xx.mongodb.net/?retryWrites=true&w=majority";
-
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+const MONGO_URI =
+      "mongodb+srv://tainadreissig14:tainadreissig14@cluster0.z0h59xx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+      
+mongoose
+      .connect(MONGO_URI)
       .then(() => console.log("Conectado ao MongoDB"))
       .catch((error) => {
-            console.error("Erro ao conectar ao MongoDB:", error);
-            process.exit(1); 
+            console.error("Erro ao conectar ao MongoDB:", error.message, error.stack);
+            process.exit(1);
       });
 
 const historySchema = new mongoose.Schema({
@@ -60,7 +62,7 @@ async function obterIPeLocalizacao(ipAddress) {
       try {
             const response = await axios.get(`https://ipwhois.app/json/${ipAddress}`);
             const ipData = response.data;
-            console.log("Dados da API de geolocalização:", ipData);  
+            console.log("Dados da API de geolocalização:", ipData);
             if (ipData.success) {
                   return {
                         ipAddress: ipData.ip,
@@ -88,11 +90,13 @@ async function obterIPeLocalizacao(ipAddress) {
       }
 }
 
-app.get("/api/test-connection", (req, res) => res.send("Conexão bem-sucedida!"));
+app.get("/api/test-connection", (req, res) =>
+      res.send("Conexão bem-sucedida!")
+);
 
 app.post("/api/history", async (req, res) => {
       const { userId, action } = req.body;
-      console.log("Dados recebidos:", req.body); 
+      console.log("Dados recebidos:", req.body);
       if (!userId || !action) {
             return res.status(400).send("Os campos userId e action são obrigatórios.");
       }
@@ -110,9 +114,11 @@ app.post("/api/history", async (req, res) => {
             await newHistory.save();
             res.status(201).send("Histórico registrado com sucesso!");
       } catch (error) {
-            console.error("Erro ao registrar histórico:", error);  
+            console.error("Erro ao registrar histórico:", error);
             res.status(500).send("Erro ao registrar histórico.");
       }
 });
 
-app.listen(port, () => console.log(`Servidor rodando em http://localhost:${port}`));
+app.listen(port, () =>
+      console.log(`Servidor rodando em http://localhost:${port}`)
+);
